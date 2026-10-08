@@ -1,0 +1,70 @@
+# ADiscord - in-game messages
+#
+# Every message uses MiniMessage: https://docs.advntr.dev/minimessage/format.html
+# <prefix> can be used anywhere. A message can be a single line or a list of lines.
+# Set a message to "" to disable it.
+
+prefix: "<#0BA6DF><bold>Discord</bold></#0BA6DF> <dark_gray>»</dark_gray> "
+
+# Used for <date> placeholders
+date-format: "dd MMM yyyy, HH:mm"
+
+# /discord
+discord:
+  - "<prefix><gray>Join our community at <click:open_url:'https://discord.gg/your-invite'><hover:show_text:'<gray>Click to open'><#0BA6DF><u>discord.gg/your-invite</u></#0BA6DF></hover></click>"
+  - "<prefix><gray>Use <#0BA6DF>/discord link</#0BA6DF> to link your account and unlock every channel."
+
+link:
+  # <code> can be clicked to copy it. <expiry> is how long the code stays valid.
+  code:
+    - "<prefix><gray>Your link code is <code><gray>."
+    - "<prefix><gray>Type <#0BA6DF>/verify <code_text></#0BA6DF> in the verify channel on Discord."
+    - "<prefix><gray>The code expires in <white><expiry></white>."
+  code-style: "<#0BA6DF><bold><code></bold></#0BA6DF>"
+  code-hover: "<gray>Click to copy"
+  already-linked: "<prefix><gray>You are already linked to <white><discord></white>. Use <click:suggest_command:'/discord unlink'><#0BA6DF>/discord unlink</#0BA6DF></click> first."
+  success: "<prefix><gray>Your account is now linked to <white><discord></white>. Welcome aboard!"
+
+unlink:
+  success: "<prefix><gray>Your Discord account has been unlinked."
+  not-linked: "<prefix><gray>You have not linked a Discord account yet."
+
+info:
+  linked:
+    - "<prefix><gray>Linked to <white><discord></white> <dark_gray>(<discord_id>)</dark_gray>"
+    - "<prefix><gray>Since <white><date></white>"
+    - "<prefix><click:suggest_command:'/discord unlink'><hover:show_text:'<gray>Click, then press enter to unlink'><red>[Unlink]</red></hover></click>"
+  not-linked: "<prefix><gray>You are not linked yet. Use <#0BA6DF>/discord link</#0BA6DF> to get started."
+
+reload: "<prefix><gray>Configuration reloaded. Bot token and database changes need a restart."
+
+admin:
+  # A backslash in front of < shows it as text instead of reading it as a tag
+  usage:
+    - '<prefix><gray>Admin commands:'
+    - '<dark_gray> - <#0BA6DF>/discordadmin lookup \<player|discord id>'
+    - '<dark_gray> - <#0BA6DF>/discordadmin link \<player> \<discord id>'
+    - '<dark_gray> - <#0BA6DF>/discordadmin unlink \<player>'
+    - '<dark_gray> - <#0BA6DF>/discordadmin sync [player]'
+  lookup:
+    - "<prefix><white><player></white> <dark_gray>(<uuid>)</dark_gray>"
+    - "<prefix><gray>Discord: <white><discord></white> <dark_gray>(<discord_id>)</dark_gray>"
+    - "<prefix><gray>Linked since <white><date></white>"
+  not-linked: "<prefix><gray><white><target></white> has no linked account."
+  unknown-player: "<prefix><red>Could not find a player named <white><target></white>."
+  linked: "<prefix><gray>Linked <white><player></white> to <white><discord_id></white>."
+  link-failed: "<prefix><red>That player or Discord account is already linked."
+  unlinked: "<prefix><gray>Unlinked <white><player></white>."
+  synced: "<prefix><gray>Syncing roles for <white><count></white> linked account(s)."
+
+chat:
+  # Discord messages shown in game.
+  # Placeholders: <name> (display name), <username>, <role>, <message>
+  # <role_color>...</role_color> paints text with the member's highest role color.
+  format: "<#0BA6DF>Discord</#0BA6DF> <dark_gray>|</dark_gray> <role_color><name></role_color><dark_gray>:</dark_gray> <white><message>"
+  # Added to messages that have files attached
+  attachment: "<#0BA6DF>[attachment]</#0BA6DF>"
+
+error:
+  bot-offline: "<prefix><red>The Discord bot is not connected right now, try again later."
+  generic: "<prefix><red>Something went wrong. Please let an administrator know."

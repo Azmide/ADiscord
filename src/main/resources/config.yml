@@ -1,0 +1,114 @@
+# ADiscord - main configuration
+#
+# In-game messages live in messages.yml and everything the bot posts on Discord lives in discord.yml.
+# Most changes apply with /discord reload. The bot token and database settings need a restart.
+#
+# To copy an ID in Discord, turn on Developer Mode (Settings > Advanced) and right click
+# the server, channel or role.
+
+bot:
+  # Create a bot at https://discord.com/developers/applications and paste its token here.
+  # Under "Bot", turn on the SERVER MEMBERS and MESSAGE CONTENT privileged intents.
+  token: "PASTE-YOUR-BOT-TOKEN-HERE"
+  guild-id: "000000000000000000"
+
+  # The "Playing ..." text under the bot name. Placeholders: {online}, {max}
+  activity:
+    enabled: true
+    # PLAYING, WATCHING, LISTENING, COMPETING or CUSTOM_STATUS
+    type: PLAYING
+    text: "with {online} players"
+    # Seconds between updates. Discord rate limits status changes, keep this at 30 or higher.
+    interval: 60
+
+database:
+  # SQLITE keeps everything in plugins/ADiscord/data.db.
+  # MYSQL works for both MySQL and MariaDB and lets several servers share the same links.
+  type: SQLITE
+  table-prefix: "adiscord_"
+  mysql:
+    host: localhost
+    port: 3306
+    database: minecraft
+    username: root
+    password: ""
+    pool-size: 6
+    # Extra JDBC properties passed to the driver
+    properties:
+      useSSL: false
+      characterEncoding: utf8
+
+linking:
+  # Codes are made of these characters. Similar looking ones (0/O, 1/I) are left out on purpose.
+  code-characters: "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  code-length: 6
+  # Seconds before an unused code expires
+  code-expiry: 300
+
+  # The channel new members can see. /verify only works here when it is set.
+  verify-channel-id: "000000000000000000"
+  # Role given to every linked member. Use this role to unlock the rest of your channels.
+  verified-role-id: "000000000000000000"
+
+  # Posts a message with a "Verify" button in the verify channel. Members can type their code
+  # in a popup instead of using /verify. The bot edits its old message instead of posting a new one.
+  verify-panel: true
+
+  # Remove the link when the member leaves the Discord server
+  unlink-on-leave: false
+
+  # Console commands run the first time a player links. Each Minecraft and Discord account
+  # can only claim this once, so unlinking and linking again does not give the reward twice.
+  # Placeholders: {player}, {uuid}, {discord_id}, {discord_name}
+  rewards: []
+  #  - "give {player} diamond 5"
+  #  - "lp user {player} permission set discord.linked true"
+
+nickname:
+  # Rename linked members on Discord. The bot can not rename the server owner
+  # or anyone whose highest role is above the bot's role.
+  enabled: true
+  format: "{player}"
+
+role-sync:
+  # Gives Discord roles based on LuckPerms groups. When a rank is removed or expires
+  # in game, the role is removed on Discord as well.
+  enabled: true
+
+  # Which groups count:
+  #   DIRECT  - groups given directly to the player, temporary ones included (recommended)
+  #   ALL     - every group the player has, including the ones inherited from other groups
+  #   PRIMARY - only the primary group
+  mode: DIRECT
+
+  # Minutes between full syncs of every linked account. This picks up changes made while
+  # players were offline. Set to 0 to disable it.
+  interval: 30
+
+  # luckperms-group: "discord-role-id"
+  groups:
+    vip: "000000000000000000"
+    mvp: "000000000000000000"
+    trial: "000000000000000000"
+
+chat:
+  enabled: true
+  channel-id: "000000000000000000"
+  minecraft-to-discord: true
+  discord-to-minecraft: true
+  # Send Minecraft chat through a webhook so every message shows the player's head and name.
+  # The bot needs the "Manage Webhooks" permission in the chat channel.
+  webhook: true
+  # Longest Discord message shown in game, longer ones are cut off
+  max-length: 256
+
+events:
+  # Where join, quit, death, advancement and server status messages go.
+  # Leave it at 0 to use the chat channel.
+  channel-id: "0"
+  join: true
+  quit: true
+  death: true
+  advancement: true
+  server-start: true
+  server-stop: true

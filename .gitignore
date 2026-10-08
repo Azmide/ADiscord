@@ -1,0 +1,28 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# VS Code / Eclipse
+.vscode/
+bin/
+.project
+.classpath
+.settings/
+.factorypath
+
+# Maven
+target/
+dependency-reduced-pom.xml
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Crash reports
+hs_err_pid*
+replay_pid*

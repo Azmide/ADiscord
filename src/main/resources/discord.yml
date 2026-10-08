@@ -1,0 +1,119 @@
+# ADiscord - everything the bot posts on Discord
+#
+# Placeholders use curly braces, like {player}. Colors are hex codes.
+# An embed can use the keys below. Set any of them to "" to leave that part out.
+#   color, title, url, description, thumbnail, image, timestamp (true or false)
+#   author: name, icon, url
+#   footer: text, icon
+#   fields: a list of entries with name, value and inline
+#
+# {avatar} is the player's head, built from avatar-url.
+
+# Use {uuid} on online mode servers and {player} on offline mode ones
+avatar-url: "https://mc-heads.net/avatar/{uuid}/128"
+
+commands:
+  verify:
+    name: verify
+    description: "Link your Minecraft account"
+    option: code
+    option-description: "The code you got from /discord link in game"
+  playerlist:
+    name: playerlist
+    description: "See who is playing right now"
+
+# Replies to /verify and the verify panel. Only the member who used it can see them.
+# Placeholders: {player}, {uuid}, {avatar}, {mention}, {channel}
+verify:
+  success:
+    color: "#0BA6DF"
+    title: "Account linked"
+    description: "Welcome {mention}! You are now linked to **{player}** and your roles are on the way."
+    thumbnail: "{avatar}"
+  invalid-code:
+    color: "#E5484D"
+    description: "That code is invalid or has expired. Type `/discord link` in game to get a new one."
+  already-linked:
+    color: "#E5484D"
+    description: "Your Discord account is already linked to **{player}**."
+  player-linked:
+    color: "#E5484D"
+    description: "**{player}** is already linked to another Discord account."
+  wrong-channel:
+    color: "#E5484D"
+    description: "Please verify in {channel}."
+  error:
+    color: "#E5484D"
+    description: "Something went wrong, please try again in a moment."
+
+# Posted in the verify channel when linking.verify-panel is on
+panel:
+  embed:
+    color: "#0BA6DF"
+    title: "Verify your account"
+    description: |-
+      Link your Minecraft account to unlock the rest of the server.
+
+      **1.** Join the Minecraft server
+      **2.** Type `/discord link` to get your code
+      **3.** Press **Verify** below and enter it, or type `/verify <code>` here
+    footer:
+      text: "Codes expire a few minutes after you get them"
+  button: "Verify"
+  modal:
+    title: "Verify your account"
+    label: "Link code"
+    placeholder: "Example: ABC123"
+
+# /playerlist. Placeholders: {online}, {max}, {players}
+playerlist:
+  ephemeral: false
+  embed:
+    color: "#0BA6DF"
+    title: "Online players ({online}/{max})"
+    description: "{players}"
+  # How each name is written and what goes between them
+  player: "`{player}`"
+  separator: ", "
+  empty: "Nobody is online right now."
+
+chat:
+  # Used when chat.webhook is off in config.yml. Placeholders: {player}, {message}
+  format: "**{player}** » {message}"
+  # Name shown on webhook messages
+  webhook-name: "{player}"
+
+# Placeholders: {player}, {uuid}, {avatar}
+events:
+  join:
+    color: "#0BA6DF"
+    author:
+      name: "{player} joined the server"
+      icon: "{avatar}"
+  quit:
+    color: "#5C6B73"
+    author:
+      name: "{player} left the server"
+      icon: "{avatar}"
+  # {message} is the death message, for example "Steve fell from a high place"
+  death:
+    color: "#E5484D"
+    author:
+      name: "{message}"
+      icon: "{avatar}"
+  # {advancement} is the advancement title and {action} comes from advancement-actions
+  advancement:
+    color: "#0BA6DF"
+    author:
+      name: "{player} has {action} [{advancement}]"
+      icon: "{avatar}"
+  advancement-actions:
+    task: "made the advancement"
+    goal: "reached the goal"
+    challenge: "completed the challenge"
+  server-start:
+    color: "#0BA6DF"
+    description: ":white_check_mark: **The server is online**"
+  server-stop:
+    color: "#E5484D"
+    description: ":octagonal_sign: **The server is offline**"

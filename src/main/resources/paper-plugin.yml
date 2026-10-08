@@ -1,0 +1,33 @@
+name: ADiscord
+version: '${project.version}'
+main: com.azmide.adiscord.ADiscordPlugin
+loader: com.azmide.adiscord.ADiscordLoader
+description: '${project.description}'
+author: AzmiDe
+api-version: '26.2'
+
+dependencies:
+  server:
+    LuckPerms:
+      load: BEFORE
+      required: false
+      join-classpath: true
+
+permissions:
+  adiscord.*:
+    description: Full access to ADiscord
+    default: op
+    children:
+      adiscord.command.link: true
+      adiscord.command.reload: true
+      adiscord.command.admin: true
+
+  adiscord.command.link:
+    description: Use /discord link, unlink and info
+    default: true
+  adiscord.command.reload:
+    description: Reload the configuration with /discord reload
+    default: op
+  adiscord.command.admin:
+    description: Use /discordadmin
+    default: op
