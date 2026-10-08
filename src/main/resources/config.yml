@@ -102,9 +102,19 @@ chat:
   # Longest Discord message shown in game, longer ones are cut off
   max-length: 256
 
+  # Shows [item], [inv] and [ender] on Discord: the held item as a tooltip picture and the
+  # inventory or ender chest as a list. The keywords are the same as InteractiveChat's and work
+  # with or without it installed. They are regular expressions, leave one empty to turn it off.
+  showcase:
+    enabled: true
+    item: '(?i)\[item\]|\[i\]'
+    inventory: '(?i)\[inv\]|\[inventory\]'
+    ender-chest: '(?i)\[ender\]|\[e\]'
+
 events:
   # Where join, quit, death, advancement and server status messages go.
-  # Leave it at 0 to use the chat channel.
+  # Leave it at 0 to use the chat channel. Set any of the messages below to false to turn it off,
+  # for example server-start and server-stop if you restart often.
   channel-id: "0"
   join: true
   quit: true

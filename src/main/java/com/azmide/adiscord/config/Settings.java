@@ -4,6 +4,7 @@ import com.azmide.adiscord.sync.GroupMode;
 import net.dv8tion.jda.api.entities.Activity;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /** Typed view over config.yml. */
 public record Settings(
@@ -49,7 +52,12 @@ public record Settings(
     }
 
     public record Chat(boolean enabled, long channelId, boolean toDiscord, boolean toMinecraft,
-                       boolean webhook, int maxLength) {
+                       boolean webhook, int maxLength, Showcase showcase) {
+    }
+
+    /** Keywords for [item], [inv] and [ender]. A keyword is null when it is turned off. */
+    public record Showcase(boolean enabled, @Nullable Pattern item, @Nullable Pattern inventory,
+                           @Nullable Pattern enderChest) {
     }
 
     public record Events(long channelId, boolean join, boolean quit, boolean death, boolean advancement,
@@ -123,7 +131,12 @@ public record Settings(
                         config.getBoolean("chat.minecraft-to-discord"),
                         config.getBoolean("chat.discord-to-minecraft"),
                         config.getBoolean("chat.webhook"),
-                        Math.max(16, config.getInt("chat.max-length", 256))),
+                        Math.max(16, config.getInt("chat.max-length", 256)),
+                        new Showcase(
+                                config.getBoolean("chat.showcase.enabled"),
+                                pattern(config.getString("chat.showcase.item"), logger),
+                                pattern(config.getString("chat.showcase.inventory"), logger),
+                                pattern(config.getString("chat.showcase.ender-chest"), logger))),
                 new Events(
                         id(config.getString("events.channel-id")),
                         config.getBoolean("events.join"),
@@ -142,6 +155,18 @@ public record Settings(
     private static ConfigurationSection section(ConfigurationSection config, String path) {
         ConfigurationSection section = config.getConfigurationSection(path);
         return section != null ? section : new MemoryConfiguration();
+    }
+
+    private static @Nullable Pattern pattern(String value, Logger logger) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Pattern.compile(value);
+        } catch (PatternSyntaxException e) {
+            logger.warning("Invalid showcase keyword '" + value + "' in config.yml: " + e.getDescription());
+            return null;
+        }
     }
 
     private static long id(String value) {

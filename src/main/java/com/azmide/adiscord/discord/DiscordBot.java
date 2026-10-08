@@ -104,6 +104,7 @@ public final class DiscordBot extends ListenerAdapter {
     public synchronized void shutdown() {
         closed = true;
         stopActivity();
+        playerList.close();
         JDA current = jda;
         if (current == null) {
             return;

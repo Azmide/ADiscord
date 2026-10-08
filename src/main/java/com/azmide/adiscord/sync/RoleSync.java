@@ -2,6 +2,7 @@ package com.azmide.adiscord.sync;
 
 import com.azmide.adiscord.ADiscordPlugin;
 import com.azmide.adiscord.config.Settings;
+import com.azmide.adiscord.hook.LuckPermsHook;
 import com.azmide.adiscord.link.LinkedAccount;
 import com.azmide.adiscord.util.Placeholders;
 import net.dv8tion.jda.api.Permission;
@@ -10,7 +11,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.ErrorResponse;
-import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,17 +29,14 @@ import java.util.concurrent.TimeUnit;
 public final class RoleSync {
 
     private final ADiscordPlugin plugin;
-    private final @Nullable LuckPermsHook luckPerms;
     private final Set<UUID> queued = ConcurrentHashMap.newKeySet();
     private final Set<String> warnings = ConcurrentHashMap.newKeySet();
 
     public RoleSync(ADiscordPlugin plugin) {
         this.plugin = plugin;
-        if (plugin.getServer().getPluginManager().isPluginEnabled("LuckPerms")) {
-            this.luckPerms = new LuckPermsHook(plugin, this::queue);
-        } else {
-            this.luckPerms = null;
-            plugin.getLogger().info("LuckPerms was not found, only the verified role and nicknames will be synced.");
+        LuckPermsHook luckPerms = plugin.luckPerms();
+        if (luckPerms != null) {
+            luckPerms.onGroupChange(plugin, this::queue);
         }
     }
 
@@ -102,14 +99,9 @@ public final class RoleSync {
         });
     }
 
-    public void close() {
-        if (luckPerms != null) {
-            luckPerms.close();
-        }
-    }
-
     private CompletableFuture<Set<String>> groups(UUID uuid) {
         Settings.Roles roles = plugin.settings().roles();
+        LuckPermsHook luckPerms = plugin.luckPerms();
         if (!roles.enabled() || roles.groups().isEmpty() || luckPerms == null) {
             return CompletableFuture.completedFuture(Set.of());
         }

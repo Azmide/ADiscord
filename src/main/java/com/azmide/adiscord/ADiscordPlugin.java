@@ -6,6 +6,7 @@ import com.azmide.adiscord.config.DiscordMessages;
 import com.azmide.adiscord.config.Messages;
 import com.azmide.adiscord.config.Settings;
 import com.azmide.adiscord.discord.DiscordBot;
+import com.azmide.adiscord.hook.LuckPermsHook;
 import com.azmide.adiscord.link.LinkManager;
 import com.azmide.adiscord.listener.PlayerListener;
 import com.azmide.adiscord.storage.Database;
@@ -33,6 +34,7 @@ public final class ADiscordPlugin extends JavaPlugin {
     private DiscordMessages discordMessages;
 
     private Database database;
+    private @Nullable LuckPermsHook luckPerms;
     private LinkManager links;
     private RoleSync roleSync;
     private DiscordBot bot;
@@ -51,6 +53,12 @@ public final class ADiscordPlugin extends JavaPlugin {
             getLogger().log(Level.SEVERE, "Could not connect to the database, check the database section in config.yml", e);
             getServer().getPluginManager().disablePlugin(this);
             return;
+        }
+
+        if (getServer().getPluginManager().isPluginEnabled("LuckPerms")) {
+            luckPerms = new LuckPermsHook();
+        } else {
+            getLogger().info("LuckPerms was not found, ranks and prefixes will not be synced.");
         }
 
         links = new LinkManager(this, new LinkRepository(database));
@@ -75,8 +83,8 @@ public final class ADiscordPlugin extends JavaPlugin {
         if (bot != null) {
             bot.shutdown();
         }
-        if (roleSync != null) {
-            roleSync.close();
+        if (luckPerms != null) {
+            luckPerms.close();
         }
         if (database != null) {
             database.close();
@@ -107,6 +115,10 @@ public final class ADiscordPlugin extends JavaPlugin {
 
     public DiscordMessages discordMessages() {
         return discordMessages;
+    }
+
+    public @Nullable LuckPermsHook luckPerms() {
+        return luckPerms;
     }
 
     public LinkManager links() {

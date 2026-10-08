@@ -4,7 +4,11 @@ import com.azmide.adiscord.ADiscordPlugin;
 import com.azmide.adiscord.config.DiscordMessages;
 import com.azmide.adiscord.config.Messages;
 import com.azmide.adiscord.config.Settings;
+import com.azmide.adiscord.hook.LuckPermsHook;
+import com.azmide.adiscord.showcase.Showcase;
+import com.azmide.adiscord.util.InteractiveChatTags;
 import com.azmide.adiscord.util.Placeholders;
+import com.azmide.adiscord.util.Text;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -17,6 +21,7 @@ import net.dv8tion.jda.api.entities.channel.attribute.IWebhookContainer;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.utils.MarkdownSanitizer;
@@ -28,19 +33,26 @@ import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Sends chat both ways between the game and the Discord chat channel. */
 public final class ChatBridge extends ListenerAdapter {
 
-    private static final String WEBHOOK_NAME = "ADiscord";
+    // Webhook names may not contain the word "discord"
+    private static final String WEBHOOK_NAME = "Minecraft Chat";
+    private static final Pattern RESERVED_NAMES = Pattern.compile("(?i)discord|clyde");
     private static final int MAX_MESSAGE_LENGTH = 2000;
     private static final int MAX_WEBHOOK_NAME_LENGTH = 80;
 
     private final ADiscordPlugin plugin;
+    private final Showcase showcase;
     private volatile @Nullable Webhook webhook;
 
     ChatBridge(ADiscordPlugin plugin) {
         this.plugin = plugin;
+        this.showcase = new Showcase(plugin);
     }
 
     /** Finds the webhook the bot made earlier, or creates one. */
@@ -76,23 +88,46 @@ public final class ChatBridge extends ListenerAdapter {
         }, error -> plugin.getLogger().warning("Could not load the chat webhooks: " + error.getMessage()));
     }
 
-    public void toDiscord(Player player, String message) {
+    public void toDiscord(Player player, String rawMessage) {
         Settings.Chat chat = plugin.settings().chat();
+        String message = InteractiveChatTags.strip(rawMessage);
         if (!chat.enabled() || !chat.toDiscord() || message.isBlank()) {
             return;
         }
 
+        String name = player.getName();
+        UUID uuid = player.getUniqueId();
+        LuckPermsHook luckPerms = plugin.luckPerms();
+        String prefix = luckPerms != null ? Text.plain(luckPerms.prefix(player)) : "";
+
+        if (!showcase.matches(message)) {
+            send(name, uuid, prefix, Showcase.Output.text(message));
+            return;
+        }
+        // Inventories can only be read on the main thread, the picture is drawn off it again
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            Showcase.Snapshot snapshot = showcase.capture(player, message);
+            plugin.getServer().getAsyncScheduler().runNow(plugin, task ->
+                    send(name, uuid, prefix, showcase.render(name, uuid, snapshot)));
+        });
+    }
+
+    private void send(String name, UUID uuid, String prefix, Showcase.Output output) {
         DiscordMessages texts = plugin.discordMessages();
-        String escaped = MarkdownSanitizer.escape(message);
-        Placeholders placeholders = texts.player(player.getName(), player.getUniqueId()).with("message", escaped);
+        String content = limit(output.content(), MAX_MESSAGE_LENGTH);
 
         Webhook hook = webhook;
         if (hook != null) {
-            String username = placeholders.apply(texts.string("chat.webhook-name")).strip();
-            String avatar = texts.avatar(player.getName(), player.getUniqueId());
-            hook.sendMessage(limit(escaped, MAX_MESSAGE_LENGTH))
-                    .setUsername(limit(username.isEmpty() ? player.getName() : username, MAX_WEBHOOK_NAME_LENGTH))
+            String username = Placeholders.of("prefix", decorate(prefix, texts.string("chat.webhook-prefix")))
+                    .with("player", name)
+                    .apply(texts.string("chat.webhook-name"))
+                    .strip();
+            String avatar = texts.avatar(name, uuid);
+            hook.sendMessage(content)
+                    .setUsername(limit(safeUsername(username.isEmpty() ? name : username), MAX_WEBHOOK_NAME_LENGTH))
                     .setAvatarUrl(avatar.isBlank() ? null : avatar)
+                    .addFiles(output.files())
+                    .addEmbeds(output.embeds())
                     .queue(null, error -> {
                         if (error instanceof ErrorResponseException response
                                 && response.getErrorResponse() == ErrorResponse.UNKNOWN_WEBHOOK) {
@@ -106,9 +141,21 @@ public final class ChatBridge extends ListenerAdapter {
             return;
         }
 
-        GuildMessageChannel channel = plugin.bot().channel(chat.channelId());
-        if (channel != null && channel.canTalk()) {
-            channel.sendMessage(limit(placeholders.apply(texts.string("chat.format")), MAX_MESSAGE_LENGTH)).queue();
+        GuildMessageChannel channel = plugin.bot().channel(plugin.settings().chat().channelId());
+        if (channel == null || !channel.canTalk()) {
+            return;
+        }
+        String formatted = texts.player(name, uuid)
+                .with("prefix", decorate(MarkdownSanitizer.escape(prefix), texts.string("chat.prefix")))
+                .with("message", content)
+                .apply(texts.string("chat.format"));
+        try {
+            channel.sendMessage(limit(formatted, MAX_MESSAGE_LENGTH))
+                    .addFiles(output.files())
+                    .addEmbeds(output.embeds())
+                    .queue();
+        } catch (InsufficientPermissionException e) {
+            plugin.getLogger().warning("Missing the " + e.getPermission().getName() + " permission in #" + channel.getName() + ".");
         }
     }
 
@@ -153,6 +200,18 @@ public final class ChatBridge extends ListenerAdapter {
                 Placeholder.component("message", body));
 
         plugin.getServer().getScheduler().runTask(plugin, () -> plugin.getServer().broadcast(line));
+    }
+
+    /** Puts the prefix into its format, or leaves it out entirely when the player has none. */
+    private static String decorate(String prefix, String format) {
+        return prefix.isEmpty() ? "" : Placeholders.of("prefix", prefix).apply(format);
+    }
+
+    /** Discord refuses webhook names that contain "discord" or "clyde". */
+    private static String safeUsername(String name) {
+        return RESERVED_NAMES.matcher(name).replaceAll(match -> Matcher.quoteReplacement(match.group()
+                .replace('o', '0').replace('O', '0')
+                .replace('e', '3').replace('E', '3')));
     }
 
     private static String limit(String value, int maxLength) {

@@ -68,6 +68,22 @@ panel:
 # /playerlist. Placeholders: {online}, {max}, {players}
 playerlist:
   ephemeral: false
+
+  # Draws the list as a picture of the tab list, with heads, colored names and ping.
+  # When it is off, or the picture can not be drawn, the text list below is sent instead.
+  image:
+    enabled: true
+    # MiniMessage. <prefix> and <suffix> come from LuckPerms, <name> is the player name
+    name: "<prefix><name><suffix>"
+    # Lines above and below the list, also MiniMessage. <online> and <max> can be used.
+    header:
+      - "<#0BA6DF><bold>Online Players"
+    footer:
+      - "<gray><white><online></white> of <white><max></white> players online"
+    embed:
+      color: "#0BA6DF"
+      image: "{image}"
+
   embed:
     color: "#0BA6DF"
     title: "Online players ({online}/{max})"
@@ -78,10 +94,36 @@ playerlist:
   empty: "Nobody is online right now."
 
 chat:
-  # Used when chat.webhook is off in config.yml. Placeholders: {player}, {message}
-  format: "**{player}** » {message}"
-  # Name shown on webhook messages
-  webhook-name: "{player}"
+  # Used when chat.webhook is off in config.yml. Placeholders: {prefix}, {player}, {message}
+  format: "{prefix}{player} » {message}"
+  # Name shown on webhook messages. Placeholders: {prefix}, {player}
+  webhook-name: "{prefix}{player}"
+
+  # How the LuckPerms prefix ({prefix} above) looks, with its colors removed. Players without
+  # a prefix get nothing at all, so there are no empty brackets.
+  prefix: "**{prefix}** "
+  webhook-prefix: "[{prefix}] "
+
+# [item], [inv] and [ender] in chat, see chat.showcase in config.yml
+showcase:
+  # Replaces the keyword in the message. {item} is the item name, {amount} the stack size
+  item: "[{item}]"
+  item-stack: "[{item} x{amount}]"
+  inventory: "[{player}'s Inventory]"
+  ender-chest: "[{player}'s Ender Chest]"
+  # Sent along with [inv] and [ender]. Placeholders: {player}, {avatar}, {title}, {items}
+  inventory-title: "{player}'s Inventory"
+  ender-chest-title: "{player}'s Ender Chest"
+  embed:
+    color: "#0BA6DF"
+    author:
+      name: "{title}"
+      icon: "{avatar}"
+    description: "{items}"
+  # How each item is listed, items with the same name are added together
+  entry: "`{amount}x` {item}"
+  separator: "\n"
+  empty: "Nothing in here."
 
 # Placeholders: {player}, {uuid}, {avatar}
 events:

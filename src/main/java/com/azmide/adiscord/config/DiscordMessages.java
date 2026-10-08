@@ -5,6 +5,7 @@ import com.azmide.adiscord.util.Placeholders;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +24,10 @@ public final class DiscordMessages {
     public String string(String path) {
         String value = config.getString(path);
         return value == null ? "" : value;
+    }
+
+    public List<String> list(String path) {
+        return config.getStringList(path);
     }
 
     public boolean bool(String path) {

@@ -102,10 +102,12 @@ public record EmbedTemplate(
         return value.length() > maxLength ? value.substring(0, maxLength - 3) + "..." : value;
     }
 
-    /** Discord rejects anything that is not an http(s) link, so drop those instead of failing. */
+    /** Discord rejects anything that is not a link or an uploaded file, so drop those instead of failing. */
     private static String link(String template, Placeholders placeholders) {
         String value = placeholders.apply(template).strip();
-        return value.startsWith("https://") || value.startsWith("http://") ? value : null;
+        return value.startsWith("https://") || value.startsWith("http://") || value.startsWith("attachment://")
+                ? value
+                : null;
     }
 
     private static Integer parseColor(String hex) {

@@ -8,9 +8,11 @@ A Paper plugin that links Minecraft accounts to Discord. Players get a code in g
 - A verified role for every linked member, so the rest of your Discord can stay hidden until they link
 - LuckPerms groups synced to Discord roles, including temporary ranks that run out
 - Discord nicknames set to the player's Minecraft name
-- Two-way chat between the server and a Discord channel, with player heads through a webhook
+- Two-way chat between the server and a Discord channel, with player heads and LuckPerms prefixes
+- `[item]`, `[inv]` and `[ender]` in chat show up on Discord as an item tooltip picture or an item list
+- Works next to InteractiveChat without its internal tags leaking into Discord
 - Join, quit, death, advancement and server start/stop messages as embeds
-- `/playerlist` on Discord
+- `/playerlist` on Discord as a picture of the tab list, with heads, colored names and ping
 - Rewards for linking that can only be claimed once per account
 - SQLite or MySQL/MariaDB storage
 - Every message can be changed: MiniMessage in game, embeds on Discord
@@ -21,6 +23,8 @@ A Paper plugin that links Minecraft accounts to Discord. Players get a code in g
 - [LuckPerms](https://luckperms.net) for role sync (optional, linking works without it)
 
 JDA, HikariCP and the database drivers are downloaded by Paper on the first start, so the server needs internet access at that point.
+
+The tab list and item pictures are drawn with the fonts installed on the machine. Most hosts have them already. On a bare Linux install without any fonts, install `fontconfig` (it pulls in a basic font), otherwise the plugin falls back to plain text.
 
 ## Setup
 
@@ -59,7 +63,13 @@ On Discord the bot adds `/verify <code>` and `/playerlist`. Both names can be ch
 | `messages.yml` | In-game messages in [MiniMessage](https://docs.advntr.dev/minimessage/format.html) format |
 | `discord.yml` | Embeds and texts the bot sends on Discord |
 
-Most changes apply with `/discord reload`. Changing the bot token or the database needs a restart.
+Most changes apply with `/discord reload`. Changing the bot token or the database needs a restart. Any message under `events` in `config.yml` can be turned off, for example `server-start` and `server-stop` if the server restarts often.
+
+### Chat
+
+Minecraft chat goes to Discord through a webhook, so every message shows the player's head and name. The LuckPerms prefix is added with its colors removed: `[Village] Azmii_` as the webhook name, or `**Village** Azmii_ » hello` when the webhook is turned off. Both formats are in the `chat` section of `discord.yml`.
+
+When a player types `[item]`, `[inv]` or `[ender]`, Discord gets the item name in the message plus a picture of the item tooltip, or a list of what is in the inventory or ender chest. The keywords match InteractiveChat's defaults and can be changed under `chat.showcase` in `config.yml`. InteractiveChat is not required, but if it is installed its hidden sender tags are removed before the message reaches Discord.
 
 ### Role sync
 
